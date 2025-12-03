@@ -12,7 +12,7 @@
 	<artifactId>backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>lotteryApp</name>
-	<description>lottery app for interview</description>
+	<description>lottery app</description>
 	<url/>
 	<licenses>
 		<license/>
