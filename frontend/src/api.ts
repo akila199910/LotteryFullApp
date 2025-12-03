@@ -9,7 +9,7 @@ export interface PlayRequest {
   ticketId: number;
 }
 
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = import.meta.env.VITE_REACT_APP_API_URL;
 
 export const getTickets = async () => {
   const res = await fetch(`${BASE_URL}/tickets`);
