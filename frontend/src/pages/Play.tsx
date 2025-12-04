@@ -45,6 +45,7 @@ const Play: React.FC = () => {
         } else {
           setError("Something went wrong.");
         }
+
         setLoading(false);
         return;
       }
@@ -57,7 +58,7 @@ const Play: React.FC = () => {
         return;
       }
 
-      setResult(json.data); 
+      setResult(json.data);
     } catch (err) {
       setError("Network error. Please check the backend.");
     }
