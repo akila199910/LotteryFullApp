@@ -31,15 +31,12 @@ const Play: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/play", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const response = await playTicket(form);
 
       if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+
         if (response.status === 400) {
-          const errData = await response.json();
           setError(errData.message || "Bad Request");
         } else if (response.status === 404) {
           setError("Ticket not found.");
@@ -52,9 +49,15 @@ const Play: React.FC = () => {
         return;
       }
 
-      // Success 200
-      const data = await response.json();
-      setResult(data.data);
+      const json = await response.json();
+
+      if (!json.status) {
+        setError(json.message || "Something went wrong.");
+        setLoading(false);
+        return;
+      }
+
+      setResult(json.data); 
     } catch (err) {
       setError("Network error. Please check the backend.");
     }
