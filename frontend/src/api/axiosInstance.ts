@@ -29,6 +29,9 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as any;
 
+    if (!store?.accessToken) {
+      return Promise.reject(error);
+    }
     // Access token expired → try refresh once
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;

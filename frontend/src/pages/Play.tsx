@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, {  useEffect, useState } from "react";
+import { Link, useNavigate , useParams } from "react-router-dom";
 import api from "../api/axiosInstance";
 
 interface PlayResponse {
@@ -13,6 +13,7 @@ interface PlayResponse {
 const Play: React.FC = () => {
 
   const { ticketId } = useParams();
+  const navigate = useNavigate();
 
 
   const [result, setResult] = useState<PlayResponse | null>(null);
@@ -23,6 +24,16 @@ const Play: React.FC = () => {
     ticketId: ticketId,
   });
 
+  const [played, setPlayed] = useState(false);
+
+
+  useEffect(() => {
+    if (played && result === null) {
+      navigate("/tickets");
+    }
+  }, [played, result]);
+
+  
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setError(null);
@@ -31,10 +42,13 @@ const Play: React.FC = () => {
       try {
         console.log("Submitting play request with form data:", form);
         const response = await api.post("/play",{
-          form
+          amount: form.amount,
+          ticketId: form.ticketId,
         });
 
         setResult(response.data.data);
+        setPlayed(true);
+
       } catch (error : any) {
 
         if (error.response?.status === 400) {
@@ -66,7 +80,9 @@ const Play: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {
+          result === null &&
+          <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
             placeholder="Play Amount"
@@ -96,17 +112,44 @@ const Play: React.FC = () => {
             {loading ? "Processing..." : "Play Now"}
           </button>
         </form>
+        }
 
         {result && (
-          <div className="mt-8 bg-gray-50 border p-6 rounded-xl shadow">
-            <h3 className="text-xl font-bold mb-3 text-center">🎉 Result</h3>
+  <div className="mt-8 bg-white border-2 border-dashed border-gray-400 p-6 rounded-2xl shadow-xl text-center">
 
-            <p><strong>Drawn Sequence:</strong> {result.DrawnSequence}</p>
-            <p><strong>Selected Sequence:</strong> {result.selectedSequence}</p>
-            <p><strong>Amount Won:</strong> Rs. {result.amountWon}</p>
-            <p><strong>Winning Percentage:</strong> {result.winningPercentage}%</p>
-          </div>
-        )}
+    <h3 className="text-3xl font-bold text-pink-600 mb-4">🎟️ Winning Ticket!</h3>
+
+    <div className="space-y-3 text-lg">
+      <p>
+        <span className="font-semibold text-gray-600">Drawn Sequence:</span>
+        <span className="font-bold text-gray-900 ml-2">{result.DrawnSequence}</span>
+      </p>
+
+      <p>
+        <span className="font-semibold text-gray-600">Your Pick:</span>
+        <span className="font-bold text-blue-600 ml-2">{result.selectedSequence}</span>
+      </p>
+
+      <p>
+        <span className="font-semibold text-gray-600">Winning %:</span>
+        <span className="font-bold text-purple-700 ml-2">{result.winningPercentage}%</span>
+      </p>
+    </div>
+
+    <div className="mt-4 bg-yellow-300 text-gray-900 p-4 rounded-xl text-2xl font-bold shadow">
+      💰 Prize: Rs. {result.amountWon}
+    </div>
+
+    <button
+      onClick={() => navigate("/tickets")}
+      className="w-full mt-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold text-lg"
+    >
+      Play Again 🔁
+    </button>
+
+  </div>
+)}
+
       </div>
     </div>
   );

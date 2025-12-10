@@ -35,16 +35,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
   }, [accessToken, loading]);
 
-  // 🔥 On page load → try refresh token once
   useEffect(() => {
     async function refreshToken() {
       try {
         const res = await api.post("/auth/refresh");
         setAccessToken(res.data.accessToken);
       } catch {
-        setAccessToken(null); // ensure no token is stored
+        setAccessToken(null); 
       }
-      setLoading(false); // 🔥 MUST set loading to false
+      setLoading(false); 
     }
 
     refreshToken();
@@ -58,7 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = () => {
     setAccessToken(null);
     api.post("/auth/logout");
-    navigate("/"); // redirect
+    navigate("/"); 
   };
 
   return (
