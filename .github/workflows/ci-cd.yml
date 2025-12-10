@@ -62,46 +62,39 @@ jobs:
           echo "::set-output name=image::${ECR_REGISTRY}/${FRONTEND_REPO}:$GITHUB_SHA"
 
   deploy:
-    name: SSH Deploy to EC2
-    runs-on: ubuntu-latest
-    needs: build_and_push
+  name: SSH Deploy to EC2
+  runs-on: ubuntu-latest
+  needs: build_and_push
 
-    steps:
-      - name: Start ssh-agent and add key
-        uses: webfactory/ssh-agent@v0.7.0
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+  steps:
+    - name: Start ssh-agent and add key
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Ensure remote host is reachable (optional)
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "echo 'ssh ok'"
+    - name: Deploy to EC2
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
+          set -e
+          cd /home/${{ secrets.EC2_USER }}/app
 
-      - name: Run remote deploy script
-        env:
-          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
-          BACKEND_IMAGE: ${{ secrets.ECR_REGISTRY }}/lottery-backend:latest
-          FRONTEND_IMAGE: ${{ secrets.ECR_REGISTRY }}/lottery-frontend:latest
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            set -e
-            cd /home/${{ secrets.EC2_USER }}/app
+          echo 'Stopping old containers...'
+          docker compose down || true
 
-            echo "Stopping old containers..."
-            docker compose down || true
+          echo 'Cleaning old images...'
+          docker system prune -af || true
 
-            echo "Cleaning old images (non-running)..."
-            docker system prune -af || true
+          echo 'Logging into ECR...'
+          aws ecr get-login-password --region eu-north-1 \
+            | docker login --username AWS --password-stdin 600097775903.dkr.ecr.eu-north-1.amazonaws.com
 
-            echo "Logging into ECR on remote host..."
-            aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 600097775903.dkr.ecr.eu-north-1.amazonaws.com
+          echo 'Pulling latest images...'
+          docker compose pull
 
+          echo 'Starting containers...'
+          docker compose up -d
 
-            echo "Pulling latest images..."
-            docker compose pull
+          echo 'Deployment finished.'
+          docker ps
+        "
 
-            echo "Starting containers..."
-            docker compose up -d
-
-            echo "Done. Showing running containers:"
-            docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
-          EOF
