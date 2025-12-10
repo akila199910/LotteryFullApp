@@ -39,9 +39,7 @@ const Tickets: React.FC = () => {
             <h2 className="text-2xl font-bold text-gray-800 text-center">{ticket.sequence}</h2>
 
             <button
-              onClick={() =>
-                navigate("/play", { state: { ticketId: ticket.id } })
-              }
+              onClick={() => navigate(`/tickets/${ticket.id}`)}
               className="mt-5 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
             >
               Play This Ticket

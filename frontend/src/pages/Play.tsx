@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { playTicket, type PlayRequest } from "../api";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import api from "../api/axiosInstance";
 
 interface PlayResponse {
   DrawnSequence: string;
@@ -14,7 +14,7 @@ const Play: React.FC = () => {
   const location = useLocation();
   const preSelectedId: number = location.state?.ticketId || 0;
 
-  const [form, setForm] = useState<PlayRequest>({
+  const [form, setForm] = useState({
     name: "",
     contactNumber: "",
     ticketId: preSelectedId,
@@ -24,46 +24,34 @@ const Play: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setResult(null);
-    setLoading(true);
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError(null);
+      setLoading(true);
 
-    try {
-      const response = await playTicket(form);
+      try {
+        const response = await api.post("/auth/", form);
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
+        alert(response.data.message);
+        
+        window.location.href = "/";
+      } catch (error : any) {
 
-        if (response.status === 400) {
-          setError(errData.message || "Bad Request");
-        } else if (response.status === 404) {
-          setError("Ticket not found.");
-        } else if (response.status === 500) {
-          setError("Server error. Try again later.");
-        } else {
-          setError("Something went wrong.");
+        if (error.response?.status === 400) {
+
+          return;
         }
 
-        setLoading(false);
-        return;
+        if (error.status === 500) {
+          setError("Server error. Please try again later.");
+          return;
+        }
+
+        setError("Network error. Please check your internet or backend.");
       }
-
-      const json = await response.json();
-
-      if (!json.status) {
-        setError(json.message || "Something went wrong.");
-        setLoading(false);
-        return;
-      }
-
-      setResult(json.data);
-    } catch (err) {
-      setError("Network error. Please check the backend.");
+      finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (

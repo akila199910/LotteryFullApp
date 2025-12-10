@@ -1,28 +1,18 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-// import Play from "./pages/Play";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Play from "./pages/Play";
 import Tickets from "./pages/Ticket";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Navbar from "./components/Navbar";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import type { JSX } from "react/jsx-dev-runtime";
-
-
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { accessToken, loading } = useAuth();
-
-  if (loading) return null;
-
-  if (!accessToken) return <Navigate to="/" replace />;
-
-  return children;
-};
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./routes/ProtectedRoute";
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
+    
       <BrowserRouter>
+      <AuthProvider>
         <div className="font-sans">
           <Navbar />
 
@@ -39,18 +29,18 @@ const App: React.FC = () => {
               }
             />
 
-            {/* <Route
-              path="/play"
+            <Route
+              path="/tickets/:ticketId"
               element={
                 <ProtectedRoute>
                   <Play />
                 </ProtectedRoute>
               }
-            /> */}
+            />
           </Routes>
         </div>
+        </AuthProvider>
       </BrowserRouter>
-    </AuthProvider>
   );
 };
 

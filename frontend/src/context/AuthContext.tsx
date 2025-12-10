@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/axiosInstance";
 import { setAuthStore } from "../api/axiosInstance";
+import { useNavigate } from "react-router-dom";
 
 export interface AuthContextType {
   accessToken: string | null;
@@ -21,38 +22,43 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
+  // 🔥 IMPORTANT: tell axiosInstance about the store
   useEffect(() => {
     setAuthStore({
       accessToken,
       setAccessToken,
-      login: async () => {},
+      login,
       logout,
       loading,
     });
   }, [accessToken, loading]);
 
+  // 🔥 On page load → try refresh token once
   useEffect(() => {
-    async function refreshAccessToken() {
+    async function refreshToken() {
       try {
         const res = await api.post("/auth/refresh");
         setAccessToken(res.data.accessToken);
-      } catch {}
-      setLoading(false);
+      } catch {
+        setAccessToken(null); // ensure no token is stored
+      }
+      setLoading(false); // 🔥 MUST set loading to false
     }
-    refreshAccessToken();
+
+    refreshToken();
   }, []);
 
   const login = async (email: string, password: string) => {
     const res = await api.post("/auth/login", { email, password });
-
     setAccessToken(res.data.accessToken);
   };
 
   const logout = () => {
     setAccessToken(null);
-    // Optionally call backend to clear cookie
-    // api.post("/auth/logout")
+    api.post("/auth/logout");
+    navigate("/"); // redirect
   };
 
   return (

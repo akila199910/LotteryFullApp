@@ -56,7 +56,7 @@ public class AuthController {
         Cookie cookie = new Cookie("refreshToken", refresh);
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
-        cookie.setPath("api/auth/refresh");
+        cookie.setPath("/api/auth/refresh");
         cookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
         response.addCookie(cookie);
 
@@ -100,5 +100,20 @@ public class AuthController {
 
         return ResponseEntity.ok(new AuthResponse(newAccess));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+
+        Cookie cookie = new Cookie("refreshToken", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/api/auth/refresh");
+        cookie.setMaxAge(0);
+
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok("Logged out successfully");
+    }
+
 
 }

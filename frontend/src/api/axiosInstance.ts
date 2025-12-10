@@ -1,10 +1,8 @@
 import axios, { AxiosError } from "axios";
 import type { AuthContextType } from "../context/AuthContext";
 
-
 let store: AuthContextType | null = null;
 
-// Allow AuthContext to register itself
 export const setAuthStore = (authStore: AuthContextType) => {
   store = authStore;
 };
@@ -14,6 +12,7 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// Add access token to headers
 api.interceptors.request.use(
   (config) => {
     if (store?.accessToken) {
@@ -24,28 +23,27 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Handle refresh logic
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as any;
 
+    // Access token expired → try refresh once
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         const refreshResponse = await api.post("/auth/refresh");
+        const newToken = refreshResponse.data.accessToken;
 
-        const newAccessToken = refreshResponse.data.accessToken;
-
-        store?.setAccessToken(newAccessToken);
-
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        store?.setAccessToken(newToken);
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
         return api(originalRequest);
       } catch (refreshErr) {
-        console.warn("Refresh token failed → Logging out");
-        store?.logout?.();
-        return Promise.reject(refreshErr);
+        store?.logout?.(); // log out the user
+        return Promise.reject(refreshErr); // STOP LOOP
       }
     }
 
