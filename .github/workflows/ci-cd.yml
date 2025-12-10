@@ -71,6 +71,9 @@ jobs:
 
             echo 'Stopping old containers...'
             docker compose down || true
+            docker stop $(docker ps -q) || true
+            docker rm $(docker ps -aq) || true
+            docker network prune -f || true
 
             echo 'Cleaning old images...'
             docker system prune -af || true
