@@ -93,7 +93,6 @@ jobs:
             docker system prune -af || true
 
             echo "Logging into ECR on remote host..."
-            # aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
             aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 600097775903.dkr.ecr.eu-north-1.amazonaws.com
 
 
