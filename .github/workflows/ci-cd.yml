@@ -15,9 +15,6 @@ jobs:
   build_and_push:
     name: Build & Push images to ECR
     runs-on: ubuntu-latest
-    outputs:
-      backend_image: ${{ steps.push_backend.outputs.image }}
-      frontend_image: ${{ steps.push_frontend.outputs.image }}
 
     steps:
       - name: Checkout repo
@@ -34,67 +31,60 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      # ------------------ Backend ------------------
+      # Backend Build + Push
       - name: Build backend image
         run: |
-          docker build -t ${ECR_REGISTRY}/${BACKEND_REPO}:$GITHUB_SHA ./backend
-          docker tag ${ECR_REGISTRY}/${BACKEND_REPO}:$GITHUB_SHA ${ECR_REGISTRY}/${BACKEND_REPO}:latest
-      - name: Push backend image
-        id: push_backend
-        run: |
-          docker push ${ECR_REGISTRY}/${BACKEND_REPO}:$GITHUB_SHA
-          docker push ${ECR_REGISTRY}/${BACKEND_REPO}:latest
-          echo "::set-output name=image::${ECR_REGISTRY}/${BACKEND_REPO}:$GITHUB_SHA"
+          docker build -t ${ECR_REGISTRY}/${BACKEND_REPO}:latest ./backend
 
-      # ------------------ Frontend ------------------
+      - name: Push backend image
+        run: |
+          docker push ${ECR_REGISTRY}/${BACKEND_REPO}:latest
+
+      # Frontend Build + Push
       - name: Build frontend image
         run: |
-          docker build -t ${ECR_REGISTRY}/${FRONTEND_REPO}:$GITHUB_SHA ./frontend
-          docker tag ${ECR_REGISTRY}/${FRONTEND_REPO}:$GITHUB_SHA ${ECR_REGISTRY}/${FRONTEND_REPO}:latest
+          docker build -t ${ECR_REGISTRY}/${FRONTEND_REPO}:latest ./frontend
+
       - name: Push frontend image
-        id: push_frontend
         run: |
-          docker push ${ECR_REGISTRY}/${FRONTEND_REPO}:$GITHUB_SHA
           docker push ${ECR_REGISTRY}/${FRONTEND_REPO}:latest
-          echo "::set-output name=image::${ECR_REGISTRY}/${FRONTEND_REPO}:$GITHUB_SHA"
+
 
   deploy:
-  name: SSH Deploy to EC2
-  runs-on: ubuntu-latest
-  needs: build_and_push
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: build_and_push
 
-  steps:
-    - name: Start ssh-agent and add key
-      uses: webfactory/ssh-agent@v0.7.0
-      with:
-        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+    steps:
+      - name: Start ssh-agent and add key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-    - name: Deploy to EC2
-      run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
-          set -e
-          cd /home/${{ secrets.EC2_USER }}/app
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
+            set -e
+            cd /home/${{ secrets.EC2_USER }}/app
 
-          echo 'Stopping old containers...'
-          docker compose down || true
+            echo 'Stopping old containers...'
+            docker compose down || true
 
-          echo 'Cleaning old images...'
-          docker system prune -af || true
+            echo 'Cleaning old images...'
+            docker system prune -af || true
 
-          echo 'Logging into ECR...'
-          aws ecr get-login-password --region eu-north-1 \
-            | docker login --username AWS --password-stdin 600097775903.dkr.ecr.eu-north-1.amazonaws.com
+            echo 'Logging into ECR...'
+            aws ecr get-login-password --region ${AWS_REGION} \
+              | docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
-          echo 'Pulling latest images...'
-          docker compose pull
+            echo 'Pulling latest images...'
+            docker compose pull
 
-          echo 'Starting containers...'
-          docker compose up -d
+            echo 'Starting containers...'
+            docker compose up -d
 
-          echo 'Deployment finished.'
-          docker ps
-        "
-
+            echo 'Deployment finished.'
+            docker ps
+          "
