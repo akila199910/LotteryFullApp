@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { registerUser, type RegisterRequest } from "../api";
 import { Link } from "react-router-dom";
+import api from "../api/axiosInstance";
 
 type ValidationErrors = Record<string, string>;
 
@@ -18,50 +18,40 @@ const Register: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setValidationErrors(null);
-    setLoading(true);
-
-    try {
-      const response = await registerUser(form);
-
-      // 1. Handle Validation Errors (400 Bad Request)
-      if (response.status === 400) {
-        const data = await response.json();
-        setValidationErrors(data); // Save the Map<String, String>
-        setLoading(false);
-        return;
-      }
-
-      // 2. Handle Server Errors (500)
-      if (response.status === 500) {
-        setError("Server error. Please try again later.");
-        setLoading(false);
-        return;
-      }
-
-      if (response.ok) {
-        window.location.href = "/login"; 
-      } else {
-        setError("An unexpected error occurred.");
-      }
-
-    } catch (err) {
-      setError("Network error. Please check if backend is running.");
-    } finally {
-      setLoading(false);
-    }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleChange = (field: keyof RegisterRequest, value: string) => {
-    setForm({ ...form, [field]: value });
-    
-    if (validationErrors && validationErrors[field]) {
-        const newErrors = { ...validationErrors };
-        delete newErrors[field];
-        setValidationErrors(newErrors);
+
+  const handleRegister = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError(null);
+      setValidationErrors(null);
+      setLoading(true);
+
+      try {
+        const response = await api.post("/auth/register", form);
+
+        alert(response.data.message);
+        
+        window.location.href = "/";
+      } catch (error : any) {
+
+        if (error.response?.status === 400) {
+          setValidationErrors(error.response.data);
+
+          return;
+        }
+
+        if (error.status === 500) {
+          setError("Server error. Please try again later.");
+          return;
+        }
+
+        setError("Network error. Please check your internet or backend.");
+      }
+      finally {
+      setLoading(false);
     }
   };
 
@@ -87,7 +77,8 @@ const Register: React.FC = () => {
                 validationErrors?.name ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
               }`}
               value={form.name}
-              onChange={(e) => handleChange("name", e.target.value)}
+              onChange={handleChange}
+              name="name"
             />
             {validationErrors?.name && (
               <p className="text-red-600 text-xs mt-1 ml-1 font-medium">{validationErrors.name}</p>
@@ -103,7 +94,8 @@ const Register: React.FC = () => {
                 validationErrors?.email ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
               }`}
               value={form.email}
-              onChange={(e) => handleChange("email", e.target.value)}
+              onChange={handleChange}
+              name="email"
             />
             {validationErrors?.email && (
               <p className="text-red-600 text-xs mt-1 ml-1 font-medium">{validationErrors.email}</p>
@@ -119,7 +111,8 @@ const Register: React.FC = () => {
                 validationErrors?.contactNumber ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
               }`}
               value={form.contactNumber}
-              onChange={(e) => handleChange("contactNumber", e.target.value)}
+              onChange={handleChange}
+              name="contactNumber"
             />
             {validationErrors?.contactNumber && (
               <p className="text-red-600 text-xs mt-1 ml-1 font-medium">{validationErrors.contactNumber}</p>
@@ -135,7 +128,8 @@ const Register: React.FC = () => {
                 validationErrors?.password ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
               }`}
               value={form.password}
-              onChange={(e) => handleChange("password", e.target.value)}
+              onChange={handleChange}
+              name="password"
             />
             {validationErrors?.password && (
               <p className="text-red-600 text-xs mt-1 ml-1 font-medium">{validationErrors.password}</p>
@@ -151,7 +145,8 @@ const Register: React.FC = () => {
                 validationErrors?.confirmPassword ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
               }`}
               value={form.confirmPassword}
-              onChange={(e) => handleChange("confirmPassword", e.target.value)}
+              onChange={handleChange}
+              name="confirmPassword"
             />
             {/* Handle both specific field error or class-level DTO error */}
             {validationErrors?.confirmPassword && (

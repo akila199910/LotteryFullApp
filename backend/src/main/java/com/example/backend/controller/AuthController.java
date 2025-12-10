@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -28,18 +27,15 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final UserDetailsService userDetailsService;
 
     public AuthController(AuthService authService,
                           AuthenticationManager authenticationManager,
                           JwtService jwtService,
-                          UserRepository userRepository,
-                          UserDetailsService userDetailsService) {
+                          UserRepository userRepository) {
         this.authService = authService;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
-        this.userDetailsService = userDetailsService;
     }
 
     @PostMapping("/login")

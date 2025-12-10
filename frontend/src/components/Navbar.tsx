@@ -18,13 +18,13 @@ const Navbar: React.FC = () => {
 
         {/* Links */}
         <div className="flex items-center space-x-6">
-          <Link to="/" className={isActive("/")}>
+          {/* <Link to="/" className={isActive("/")}>
             Tickets
-          </Link>
+          </Link> */}
 
-          <Link to="/play" className={isActive("/play")}>
+          {/* <Link to="/play" className={isActive("/play")}>
             Play
-          </Link>
+          </Link> */}
 
           {/* Auth links */}
           <Link to="/" className={isActive("/login")}>

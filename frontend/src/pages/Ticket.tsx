@@ -1,13 +1,29 @@
 import React, { useEffect, useState } from "react";
-import { getTickets, type Ticket } from "../api";
 import { useNavigate } from "react-router-dom";
+import api from "../api/axiosInstance";
 
 const Tickets: React.FC = () => {
+
+  interface Ticket {
+    id: number;
+    sequence: string;
+  }
+
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  // const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    getTickets().then((res) => setTickets(res.data));
+    const fetchTickets = async () => {
+      try {
+        const response = await api.get("/tickets");
+        setTickets(response.data.data);
+      } catch (error) {
+        console.error("Error fetching tickets:", error);
+      }
+    };
+
+    fetchTickets();
   }, []);
 
   return (
