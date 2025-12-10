@@ -27,7 +27,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "5173:80"
+      - "80:80"
     environment:
         - VITE_REACT_APP_API_URL=http://51.21.191.134:8080/api
     restart: always
