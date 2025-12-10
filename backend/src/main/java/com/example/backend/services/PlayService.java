@@ -10,8 +10,12 @@ import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.repository.LotteryDataRepository;
 import com.example.backend.repository.TicketRepository;
 import com.example.backend.repository.UserRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -21,8 +25,6 @@ public class PlayService {
     private final UserRepository userRepository;
     private final LotteryDataRepository lotteryDataRepository;
     private final TicketRepository ticketRepository;
-
-    private static final double JACKPOT = 100000.0;
 
     public PlayService(GenerateSequence generateSequence, UserRepository userRepository,
                        LotteryDataRepository lotteryDataRepository, TicketRepository ticketRepository) {
@@ -41,16 +43,20 @@ public class PlayService {
 
         Ticket ticket = ticketOpt.get();
 
-        User user = userRepository.findByContactNumber(playRequestDTO.getContactNumber())
-                .orElseGet(() -> registerUser(playRequestDTO.getName(), playRequestDTO.getContactNumber()));
+        User user = userRepository.findByEmail(Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         String selectedSequence = ticket.getSequence();
         String drawnSequence = generateSequence.generateSequence();
 
-        // here need to create function to cal win percentage
         int winningPercentage = calculateWinningPercentage(selectedSequence, drawnSequence);
 
-        double amountWon = (winningPercentage / 100.0) * JACKPOT;
+        BigDecimal amount = new BigDecimal(playRequestDTO.getAmount());
+        BigDecimal percentage = BigDecimal.valueOf(winningPercentage)
+                .divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP);
+
+        BigDecimal amountWon = amount.multiply(percentage);
+
 
         LotteryData lotteryData = new LotteryData();
         lotteryData.setTicket(ticket);
@@ -58,7 +64,8 @@ public class PlayService {
         lotteryData.setDrawnSequence(drawnSequence);
         lotteryData.setWonPercentage(winningPercentage);
         lotteryData.setWonAmount(amountWon);
-
+        lotteryData.setPlayAmount(amount);
+        lotteryData.setLostAmount(null);
         lotteryData = lotteryDataRepository.save(lotteryData);
 
         PlayResponseDTO responseDTO = new PlayResponseDTO();
@@ -66,7 +73,8 @@ public class PlayService {
         responseDTO.setSelectedSequence(selectedSequence);
         responseDTO.setDrawnSequence(drawnSequence);
         responseDTO.setWinningPercentage(winningPercentage);
-        responseDTO.setAmountWon(amountWon);
+        responseDTO.setAmountWon(amountWon.doubleValue());
+        responseDTO.setPlayAmount(lotteryData.getPlayAmount().doubleValue());
 
         return responseDTO;
     }
@@ -110,4 +118,5 @@ public class PlayService {
 
         return Math.min(100, percentage);
     }
+
 }

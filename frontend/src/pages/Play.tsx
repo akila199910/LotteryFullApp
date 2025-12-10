@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import api from "../api/axiosInstance";
 
 interface PlayResponse {
@@ -11,18 +11,17 @@ interface PlayResponse {
 }
 
 const Play: React.FC = () => {
-  const location = useLocation();
-  const preSelectedId: number = location.state?.ticketId || 0;
 
-  const [form, setForm] = useState({
-    name: "",
-    contactNumber: "",
-    ticketId: preSelectedId,
-  });
+  const { ticketId } = useParams();
+
 
   const [result, setResult] = useState<PlayResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    amount: "",
+    ticketId: ticketId,
+  });
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -30,15 +29,16 @@ const Play: React.FC = () => {
       setLoading(true);
 
       try {
-        const response = await api.post("/auth/", form);
+        console.log("Submitting play request with form data:", form);
+        const response = await api.post("/play",{
+          form
+        });
 
-        alert(response.data.message);
-        
-        window.location.href = "/";
+        setResult(response.data.data);
       } catch (error : any) {
 
         if (error.response?.status === 400) {
-
+          setError(error.response.data.message || "Invalid play request.");
           return;
         }
 
@@ -69,30 +69,21 @@ const Play: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
-            placeholder="Your Name"
+            placeholder="Play Amount"
             className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            value={form.amount}
+            onChange={(e) => setForm({ ...form, amount: e.target.value })}
           />
 
           <input
-            type="text"
-            placeholder="Contact Number"
-            className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
-            value={form.contactNumber}
-            onChange={(e) =>
-              setForm({ ...form, contactNumber: e.target.value })
-            }
-          />
-
-          <input
-            type="number"
+            type="hidden"
             placeholder="Ticket ID"
             className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
             value={form.ticketId}
             onChange={(e) =>
-              setForm({ ...form, ticketId: Number(e.target.value) })
+              setForm({ ...form, ticketId: e.target.value })
             }
+
           />
 
           <button
@@ -102,7 +93,7 @@ const Play: React.FC = () => {
             ${loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}
               transition`}
           >
-            {loading ? "Processing..." : "Submit"}
+            {loading ? "Processing..." : "Play Now"}
           </button>
         </form>
 

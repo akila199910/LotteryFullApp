@@ -10,4 +10,5 @@ public class PlayResponseDTO {
     private String DrawnSequence;
     private int winningPercentage;
     private Double amountWon;
+    private Double playAmount;
 }

@@ -27,12 +27,11 @@ public class PlayController {
     @PostMapping
     public ResponseEntity<?>playTicket(@Valid @RequestBody PlayRequestDTO request){
 
-        System.out.println("Test");
-
         Map<String, Object> body = new HashMap<>();
         body.put("status", true);
         body.put("message", "Ticket played successfully");
         body.put("data", playService.tryTicket(request));
+
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 }
