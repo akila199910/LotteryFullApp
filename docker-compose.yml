@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  backend:
+    container_name: lottery-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:mysql://lottery-db.c50weqcmy8aw.eu-north-1.rds.amazonaws.com:3306/lotteryDb
+      DB_USERNAME: lotteryUser
+      DB_PASSWORD: lotteryUser1234
+      SECRET_KEY: hvdenjn67ijd6tbhnsmd45555decrec54dcc5ec4cef4c
+      ACCESS_EXP_MS: 900000
+      REFRESH_SECRET_KEY: 86400000
+      FRONTEND_URL: http://51.21.191.134
+    restart: always
+    networks:
+      - app-network
+
+  frontend:
+    container_name: lottery-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    environment:
+        - VITE_REACT_APP_API_URL=http://51.21.191.134:8080/api
+    restart: always
+    networks:
+      - app-network
+    depends_on:
+      - backend
+
+networks:
+  app-network:
+    driver: bridge
