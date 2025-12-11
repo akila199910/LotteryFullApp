@@ -45,8 +45,9 @@ jobs:
       # Frontend Build + Push
       - name: Build frontend image
         run: |
-          docker build -t ${ECR_REGISTRY}/${FRONTEND_REPO}:latest ./frontend
-
+          docker build \
+            --build-arg VITE_REACT_APP_API_URL=http://51.21.191.134:8080/api \
+            -t ${ECR_REGISTRY}/${FRONTEND_REPO}:latest ./frontend
       - name: Push frontend image
         run: |
           docker push ${ECR_REGISTRY}/${FRONTEND_REPO}:latest

@@ -5,6 +5,9 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+ARG VITE_REACT_APP_API_URL
+ENV VITE_REACT_APP_API_URL=$VITE_REACT_APP_API_URL
+
 # Copy package.json and lock file
 COPY package.json package-lock.json ./
 
@@ -15,7 +18,7 @@ RUN npm ci
 COPY . .
 
 # Build Vite production bundle
-RUN npm run build
+RUN VITE_REACT_APP_API_URL=$VITE_REACT_APP_API_URL npm run build
 
 # ============================
 # 2️⃣ Production Stage
