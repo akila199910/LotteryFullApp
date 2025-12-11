@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { AxiosError } from "axios";
 import { useAuth } from "../context/AuthContext";
 
@@ -7,7 +7,10 @@ type ValidationErrors = Record<string, string>;
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, accessToken, loading: authLoading } = useAuth();
+
+  if (authLoading) return null;
+  if (accessToken) return <Navigate to="/tickets" replace />;
 
   const [form, setForm] = useState({
     email: "",
