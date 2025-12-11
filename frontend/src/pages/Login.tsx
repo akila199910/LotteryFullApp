@@ -7,9 +7,8 @@ type ValidationErrors = Record<string, string>;
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login, accessToken, loading: authLoading } = useAuth();
+  const { login, accessToken } = useAuth();
 
-  if (authLoading) return null;
   if (accessToken) return <Navigate to="/tickets" replace />;
 
   const [form, setForm] = useState({
