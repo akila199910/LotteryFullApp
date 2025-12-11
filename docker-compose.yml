@@ -14,7 +14,7 @@ services:
       DB_PASSWORD: lotteryUser1234
       SECRET_KEY: hvdenjn67ijd6tbhnsmd45555decrec54dcc5ec4cef4c
       ACCESS_EXP_MS: 900000
-      REFRESH_SECRET_KEY: 86400000
+      REFRESH_EXP_MS: 86400000
       FRONTEND_URL: http://51.21.191.134
     restart: always
     networks:
