@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       logout,
       loading,
     });
-  }, []);
+  }, [ accessToken, loading ]);
 
   useEffect(() => {
     async function refreshToken() {
