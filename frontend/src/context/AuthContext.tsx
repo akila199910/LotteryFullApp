@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/axiosInstance";
 import { setAuthStore } from "../api/axiosInstance";
-import { useNavigate } from "react-router-dom";
 
 export interface AuthContextType {
   accessToken: string | null;
@@ -22,9 +21,7 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
-  // 🔥 IMPORTANT: tell axiosInstance about the store
   useEffect(() => {
     setAuthStore({
       accessToken,
@@ -57,7 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = () => {
     setAccessToken(null);
     api.post("/auth/logout");
-    navigate("/"); 
+    setAccessToken(null);
   };
 
   return (
