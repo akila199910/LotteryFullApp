@@ -6,6 +6,8 @@ const Navbar: React.FC = () => {
   const { accessToken, logout } = useAuth();
 
 
+    if (!accessToken) return null;
+
   return (
     <nav className="bg-white shadow-md px-6 py-4 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
