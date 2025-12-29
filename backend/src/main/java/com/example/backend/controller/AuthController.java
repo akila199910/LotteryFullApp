@@ -1,10 +1,7 @@
 package com.example.backend.controller;
 
 import com.example.backend.JWT.JwtService;
-import com.example.backend.dto.AuthResponse;
-import com.example.backend.dto.LoginReqDTO;
-import com.example.backend.dto.RegisterReqDTO;
-import com.example.backend.dto.RegisterResDTO;
+import com.example.backend.dto.*;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.services.AuthService;
@@ -12,6 +9,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
@@ -27,15 +25,19 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final long accessExpMs;
 
     public AuthController(AuthService authService,
                           AuthenticationManager authenticationManager,
                           JwtService jwtService,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          @Value("${jwt.access-exp-ms}") long accessExpMs
+    ) {
         this.authService = authService;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
+        this.accessExpMs = accessExpMs;
     }
 
     @PostMapping("/login")
@@ -60,7 +62,7 @@ public class AuthController {
         cookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
         response.addCookie(cookie);
 
-        return ResponseEntity.ok(new AuthResponse(access));
+        return ResponseEntity.ok(new AuthResponse(access, refresh, "Bearer", accessExpMs));
     }
 
 
@@ -71,7 +73,8 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(HttpServletRequest request) {
+    public ResponseEntity<AuthResponse> refresh(@RequestBody(required = false) RefreshRequest body,
+                                                HttpServletRequest request) {
 
         String refreshToken = null;
 
@@ -82,6 +85,11 @@ public class AuthController {
                 }
             }
         }
+
+        if (refreshToken == null && body != null) {
+            refreshToken = body.getRefreshToken();
+        }
+
 
         if (refreshToken == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -98,7 +106,13 @@ public class AuthController {
 
         String newAccess = jwtService.generateAccessToken(username);
 
-        return ResponseEntity.ok(new AuthResponse(newAccess));
+        return ResponseEntity.ok(new AuthResponse(newAccess,null, "Bearer", accessExpMs ));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserReqDTO> me(){
+
+        return ResponseEntity.ok(authService.getMe());
     }
 
     @PostMapping("/logout")
