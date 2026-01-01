@@ -23,9 +23,8 @@ public class ProfileService {
 
     public ProfileUpdateResDTO updateProfile(UpdateProfileReqDTO updateProfileReqDTO) {
 
-        System.out.println(updateProfileReqDTO);
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        System.out.println(auth);
 
         if (auth == null || !auth.isAuthenticated()
                 || auth.getPrincipal().equals("anonymousUser")) {
